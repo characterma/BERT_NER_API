@@ -1,0 +1,135 @@
+## This file declares variables to be passed into your templates ##
+
+# Below will be replaced by environment variables defined in env.sh
+appName: [[[APP_NAME]]]
+imageRepository: [[[IMAGE_REPOS]]]
+imageTag: [[[IMAGE_TAG]]]
+ciBuildRef: [[[CI_REF]]]
+
+# Below set as Always or IfNotPresent
+imagePullPolicy: Always
+
+# Setup Job kind
+job:
+  enabled: false
+  name: "jobtest"
+  imageRepository: "busybox"
+  # the default restartPolicy is "Never" or can use "OnFailure" on demand
+  restartPolicy: Never
+  # to specify the number of retries before considering a Job as failed.
+  backoffLimit: "4"
+  bootstrapShellCommand: "date; echo Hello from the Kubernetes cluster"
+
+# Setup CronJob kind
+cronjob:
+  enabled: false
+  name: "cronjobtest"
+  imageRepository: "busybox"
+  # the default restartPolicy is "Never" or can use "OnFailure" on demand
+  restartPolicy: OnFailure
+  ShellCommand: "date; echo Hello from the Kubernetes cluster"
+  # the schedule format is like cronjob
+  schedule: "30 3 * * *"
+
+## A string to add extra environment variables
+extraEnvVars: |
+  - name: TZ
+    value: "Asia/Hong_Kong"
+
+# By default, no changes required for below service settings
+service:
+  enabled: true
+  type: ClusterIP
+  externalPort: 8080
+  internalPort: 8080
+replicaCount: 1
+
+# Whether to enable ingress rule for external API access
+ingress:
+  enabled: true
+
+# Whether to load all files under /configs into a Configmap
+configmap:
+  enabled: true
+  configfileMounts:
+    - mountTo: "/ailab/configs/configs.yaml"
+      name: "configs.yaml"
+
+appConfigs:
+  swaggerRootPath: [[[SWAGGER_ROOTPATH]]]
+  limitConcurrency: 10
+
+model:
+  model_path: src/models/model_0314.pth
+  tokenzier_path: src/models/chinese-roberta-wwm-ext_tokenizer
+  pretrained_model_path: src/models/chinese-roberta-wwm-ext_model
+
+keywords:
+  keyword_path: src/models/keyword_list_0314.txt
+
+# Whether use imagePullSecrets or not (not need this var. with RnD env)
+imagePullSecrets:
+  - name: docker-pub
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+podLabels: {}
+# example
+# podLabels:
+#   key1: mc-cpu
+#   key2: mc-cpu_mc-gpu
+
+resources:
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  limits:
+    cpu: 3000m
+    memory: 10G
+  requests:
+    cpu: 1000m
+    memory: 1G
+
+# Whether to enable Horizontal Pod Autoscaler
+hpa:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 1
+  cpu:
+    averageUtilization: 75
+  memory:
+    averageUtilization: 75
+
+
+# Whether to enable "istio-ingress" rule for external API access
+istioingress:
+  enabled: false
+  internalPort: 8080
+
+# Whether to enable "istio-auth" rule for external API access
+# Istio authentication policy and related mutual TLS authentication
+istioauth:
+  enabled: false
+  issuer: http://keycloak-http.playground/keycloak/auth/realms/realm-ess
+  jwksUri: http://keycloak-http.playground/keycloak/auth/realms/realm-ess/protocol/openid-connect/certs
+  mtls:
+    mode: PERMISSIVE
+  principalBinding: USE_ORIGIN
+
+# Whether to enable "istio-destinationrule" rule for external API access
+# https://archive.istio.io/v1.4/docs/concepts/traffic-management/#destination-rules
+# Destination rules are applied after virtual service routing rules are evaluated, so they apply to the traffic’s “real” destination.
+istiodestinationrule:
+  enabled: false
+  tls:
+    mode: ISTIO_MUTUAL
+
+# Whether to enable "istio-blackwhitelist" for external API access
+istioblackwhitelist:
+  enabled: false
+  providerUrl: http://192.168.60.60:8080/WhiteList

@@ -1,0 +1,81 @@
+{{- $appName := .Values.appName -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+{{- template "commonMeta" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ $appName }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $appName }}
+        release: {{ .Release.Name }}
+      {{- with .Values.podLabels }}
+        # podLabels:
+        #   owner: mc-cpu
+        #   owner2: mc-gpu 
+{{- toYaml . | nindent 8 }}
+      {{- end }}
+        
+    spec:
+      containers:
+      - name: {{ $appName }}
+        image: {{ .Values.imageRepository }}:{{ .Values.imageTag }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+        env:
+        {{- if .Values.extraEnvVars }}
+{{ tpl .Values.extraEnvVars . | indent 8 }}
+        {{- end }}
+        resources:
+          {{- toYaml .Values.resources | nindent 12 }}
+        terminationMessagePolicy: FallbackToLogsOnError
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: {{ default 8080 .Values.service.internalPort }}
+          initialDelaySeconds: 5
+          periodSeconds: 600
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: {{ default 8080 .Values.service.internalPort }}
+          initialDelaySeconds: 15
+          periodSeconds: 600
+        startupProbe:
+          httpGet:
+            path: /healthz
+            port: {{ default 8080 .Values.service.internalPort }}
+          failureThreshold: 30
+          periodSeconds: 10
+        ports:
+        - containerPort: {{ default 8080 .Values.service.internalPort }}
+        volumeMounts:
+        {{- range .Values.configmap.configfileMounts }}
+            - name: configs
+              mountPath : {{ .mountTo }}
+              subPath : {{ .name }}
+        {{- end }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      volumes:
+      - name: configs
+        configMap:
+          name: {{ $appName }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}

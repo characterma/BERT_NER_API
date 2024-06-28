@@ -1,0 +1,3 @@
+--index-url http://ess-repos01.wisers.com:8081/repository/pypi-server-group/simple
+--trusted-host ess-repos01.wisers.com
+datamgr-common

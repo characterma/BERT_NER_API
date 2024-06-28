@@ -1,0 +1,22 @@
+{{- if .Values.job.enabled -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+{{- template "commonMeta" . }}
+spec:
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.job.name }}
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+      - name: {{ .Values.job.name }}
+        image: {{ .Values.job.imageRepository }}
+        command:
+        - "sh"
+        - "-c"
+        - {{ .Values.job.bootstrapShellCommand | quote }}
+      restartPolicy: {{ .Values.job.restartPolicy }}
+  backoffLimit: {{ .Values.job.backoffLimit }}
+{{- end -}}

@@ -1,0 +1,146 @@
+{{- if .Values.locust_webui -}}
+# job.yaml is only used by .Values.locust_webui == false
+{{- else -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.fullnameOverride }}-master
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5557
+      targetPort: 5557
+      protocol: TCP
+      name: master-port
+
+  selector:
+    app: locust-master
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Values.fullnameOverride }}-master
+  labels:
+    app: locust-master
+spec:
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
+      labels:
+        app: locust-master
+    spec:
+      serviceAccount: {{ .Values.fullnameOverride }}
+      serviceAccountName: {{ .Values.fullnameOverride }}
+      containers:
+      - name: {{ .Values.fullnameOverride }}-master
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        command:
+        - bash
+        - /config/docker-entrypoint.sh
+        ports:
+          - containerPort: 5557
+        args:
+          - --master
+          - --locustfile=/mnt/locust/{{ .Values.locust_locustfile }}
+          - --host={{ .Values.locust_host }}
+          - --users={{ .Values.locust_users }}
+          - --spawn-rate={{ .Values.locust_spawn_rate }}
+          - --headless
+          - --html=/tmp/{{ .Values.groupName }}/{{ .Values.appName }}/{{ .Values.chartVersion }}/locust-reports/reports.html
+          - --csv=/tmp/{{ .Values.groupName }}/{{ .Values.appName }}/{{ .Values.chartVersion }}/locust-reports/reports.csv
+          - --run-time={{ .Values.locust_run_time }}
+          - --loglevel={{ .Values.worker.logLevel }}
+        volumeMounts:
+          - name: locustfile
+            mountPath: /mnt/locust
+          - name: lib
+            mountPath: /mnt/locust/lib
+          - name: config
+            mountPath: /config
+        env:
+          - name: LOCUST_HOST
+            value: "{{ .Values.locust_host }}"
+          - name: LOCUST_USERS
+            value: "{{ .Values.locust_users }}"
+          - name: LOCUST_SPAWN_RATE
+            value: "{{ .Values.locust_spawn_rate }}"
+          - name: LOCUST_HEADLESS
+            value: "true"
+          - name: LOCUST_RUN_TIME
+            value: "{{ .Values.loadtest.locust_run_time }}"
+      restartPolicy: Never
+      volumes:
+        - name: lib
+          configMap:
+            name: {{ template "locust.lib_configmap_name" . }}
+        - name: locustfile
+          configMap:
+            name: {{ template "locust.locustfile_configmap_name" . }}
+        - name: config
+          configMap:
+            name: {{ template "locust.fullname" . }}-config
+  backoffLimit: 4
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Values.fullnameOverride }}-slave
+spec:
+  parallelism: {{ .Values.locust_slave }}
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
+      name: locust-slave-job
+    spec:
+      containers:
+        - name: {{ .Values.fullnameOverride }}-slave
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+          - bash
+          - /config/docker-entrypoint.sh
+          args:
+            - --worker
+            - --locustfile=/mnt/locust/{{ .Values.locust_locustfile }}
+            - --host={{ .Values.locust_host }}
+            - --users={{ .Values.locust_users }}
+            - --spawn-rate={{ .Values.locust_spawn_rate }}
+            - --headless
+            - --master-host={{ template "locust.fullname" . }}-master
+            - --loglevel={{ .Values.worker.logLevel }}
+          volumeMounts:
+            - name: locustfile
+              mountPath: /mnt/locust
+            - name: lib
+              mountPath: /mnt/locust/lib
+            - name: config
+              mountPath: /config
+          env:
+            - name: LOCUST_HOST
+              value: "{{ .Values.locust_host }}"
+            - name: LOCUST_USERS
+              value: "{{ .Values.locust_users }}"
+            - name: LOCUST_SPAWN_RATE
+              value: "{{ .Values.locust_spawn_rate }}"
+            - name: LOCUST_HEADLESS
+              value: "true"
+            - name: LOCUST_MASTER_HOST
+              value: "{{ template "locust.fullname" . }}-master"
+            - name: LOCUST_MASTER_PORT
+              value: "5557"
+      restartPolicy: Never
+      volumes:
+        - name: lib
+          configMap:
+            name: {{ template "locust.lib_configmap_name" . }}
+        - name: locustfile
+          configMap:
+            name: {{ template "locust.locustfile_configmap_name" . }}
+        - name: config
+          configMap:
+            name: {{ template "locust.fullname" . }}-config
+  backoffLimit: 4
+{{- end }}

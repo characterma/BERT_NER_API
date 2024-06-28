@@ -1,0 +1,22 @@
+APP:
+  ENVIRONMENT: development
+  DEBUG: false
+  ROOT_PATH: "/"
+  DEVICE: "cuda"
+  LOGGIN_LEVEL: DEBUG
+
+MODEL:
+  MODEL_PATH: src/models/model.pth
+  TOKENIZER_PATH: src/models/chinese-roberta-wwm-ext_tokenizer
+  PRETRAINED_MODEL_PATH: src/models/chinese-roberta-wwm-ext_model
+  MAX_LEN: 512
+
+
+
+COMPANY_ENTITY:
+  ENTITY_FILE_PATH: configs/company_entity_update.json
+  USE_FIXED: True
+  
+MAPPING:
+  IDS_TO_LABELS: configs/ids_to_labels.json
+  LABELS_TO_IDS: configs/labels_to_ids.json

@@ -1,0 +1,57 @@
+{
+	"info": {
+		"_postman_id": "1f95127f-8226-46c1-9353-697edc8a7882",
+		"name": "NER-Eng",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "englishNer",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "c769ead2-684a-48a1-ad77-0ac4acfbdc1d",
+						"type": "text/javascript",
+						"exec": [
+							"pm.test(\"Your test name\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData[1].text_segment).to.eql(\"Sonny Perdue\");",
+							"});"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"text\":\"Agriculture Secretary Sonny Perdue on Tuesday unveiled a three-part, $12 billion plan to ease the sting of retaliatory tariffs on U.S. farmers through a mix of payments, purchases and trade promotion efforts. The plan seeks to ensure that U.S. farmers and ranchers — a key constituency for President Donald Trump and Republicans — don’t bear the brunt of an escalating trade fight as the administration pursues an aggressive course to rebalance America's trade relationships.\"\r\n  \r\n}"
+				},
+				"url": {
+					"raw": "http://ess25.wisers.com/playground/ner-english-api/ess/entityextr/analyse",
+					"protocol": "http",
+					"host": [
+						"ess25",
+						"wisers",
+						"com"
+					],
+					"path": [
+						"playground",
+						"ner-english-api",
+						"ess",
+						"entityextr",
+						"analyse"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
