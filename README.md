@@ -1,6 +1,10 @@
 # **NER model for Starbucks**
 ---
- 
+## 模型云储存文档结构
+![image](https://github.com/characterma/BERT_NER_API/assets/108558762/f622d0f7-cae2-4e90-b076-1436730d62fb)
+![image](https://github.com/characterma/BERT_NER_API/assets/108558762/0d5c50b8-639f-413c-b66d-5791b231ff92)
+![image](https://github.com/characterma/BERT_NER_API/assets/108558762/fc77573e-64c2-4549-9f54-33bbb9080cd6)
+
 ## Description
  
 This is an NER API for Starbucks project. Target entities include coffee brand and coffee names.
